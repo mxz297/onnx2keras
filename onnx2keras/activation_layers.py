@@ -1,4 +1,5 @@
 from tensorflow import keras
+from tensorflow import nn
 from .utils import ensure_tf_type, ensure_numpy_type
 
 
@@ -161,3 +162,21 @@ def convert_prelu(node, params, layers, node_name, keras_name):
         prelu = \
             keras.layers.PReLU(weights=[W], shared_axes=[2, 3], name=keras_name)
         layers[node_name] = prelu(input_0)
+
+def convert_logsoftmax(node, params, layers, node_name, keras_name):
+    """
+    Convert LogSoftMax activation layer
+    :param node: current operation node
+    :param params: operation attributes
+    :param layers: available keras layers
+    :param node_name: internal converter name
+    :param keras_name: resulting layer name
+    :return: None
+    """
+    if len(node.input) != 1:
+        assert AttributeError('More than 1 input for an activation layer.')
+
+    input_0 = ensure_tf_type(layers[node.input[0]], name="%s_const" % keras_name)
+
+    logsoftmax = keras.layers.Lambda(nn.log_softmax)
+    layers[node_name] = logsoftmax(input_0)
